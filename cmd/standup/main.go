@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -51,37 +52,30 @@ func runStandup(cmd *cobra.Command, args []string) error {
 	}
 
 	if flagUser == "" {
-		fmt.Print("Getting authenticated GitHub user... ")
 		user, err := githubClient.GetCurrentUser()
 		if err != nil {
-			fmt.Println("Failed")
 			return fmt.Errorf("failed to get current user: %w", err)
 		}
 		flagUser = user
-		fmt.Printf("✅ Found user: %s\n", flagUser)
 	}
 
 	endDate := time.Now()
 	startDate := endDate.AddDate(0, 0, -flagDays)
 
-	fmt.Printf("Analyzing GitHub activity for %s (%s to %s)\n",
-		flagUser, startDate.Format("2006-01-02"), endDate.Format("2006-01-02"))
-
-	fmt.Print("Collecting GitHub activity data...\n")
 	activities, err := githubClient.CollectActivity(flagUser, flagRepo, startDate, endDate)
 	if err != nil {
 		return fmt.Errorf("failed to collect GitHub activity: %w", err)
 	}
 
 	if len(activities) == 0 {
-		fmt.Println("No GitHub activity found for the specified period.")
+		log.Println("No GitHub activity found for the specified period.")
 		return nil
 	}
 
-	fmt.Printf("Found %d activities\n", len(activities))
+	log.Printf("Found %d activities\n", len(activities))
 
 	commits, prs, issues, reviews := countActivities(activities)
-	fmt.Printf("   %d commits, %d pull requests, %d issues, %d reviews\n", commits, prs, issues, reviews)
+	log.Printf("   %d commits, %d pull requests, %d issues, %d reviews\n", commits, prs, issues, reviews)
 
 	llmClient, err := llm.NewClient()
 	if err != nil {
@@ -103,16 +97,11 @@ func runStandup(cmd *cobra.Command, args []string) error {
 	}
 
 	// Generate standup report using GitHub Models
-	fmt.Printf("Generating standup report using %s...\n", flagModel)
 	report, err := llmClient.GenerateStandupReport(activities, flagModel, promptMessages)
 	if err != nil {
 		return fmt.Errorf("failed to generate standup report: %w", err)
 	}
 
-	fmt.Println("Report generated successfully!")
-	fmt.Println("\n" + strings.Repeat("=", 50))
-	fmt.Println("STANDUP REPORT")
-	fmt.Println(strings.Repeat("=", 50))
 	fmt.Println(report)
 
 	return nil

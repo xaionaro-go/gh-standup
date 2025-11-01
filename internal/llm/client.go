@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -81,16 +82,15 @@ func getMappedTemperature(model string) (float64, bool) {
 }
 
 func NewClient() (*Client, error) {
-	fmt.Print("  Checking GitHub token... ")
+	log.Print("  Checking GitHub token... ")
 
 	host, _ := auth.DefaultHost()
 	token, _ := auth.TokenForHost(host) // check GH_TOKEN, GITHUB_TOKEN, keychain, etc
 
 	if token == "" {
-		fmt.Println("Failed")
-		return nil, fmt.Errorf("No GitHub token found. Please run 'gh auth login' to authenticate.")
+		return nil, fmt.Errorf("no GitHub token found. Please run 'gh auth login' to authenticate")
 	}
-	fmt.Println("Done")
+	log.Println("Done")
 
 	return &Client{token: token}, nil
 }
@@ -109,17 +109,16 @@ func (c *Client) GenerateStandupReport(
 	model string,
 	promptMessages []PromptMessage,
 ) (string, error) {
-	fmt.Print("  Formatting activity data for AI... ")
+	log.Print("  Formatting activity data for AI... ")
 	activitySummary := c.formatActivitiesForLLM(activities)
-	fmt.Println("Done")
+	log.Println("Done")
 
-	fmt.Print("  Loading prompt configuration... ")
+	log.Print("  Loading prompt configuration... ")
 	promptConfig, err := loadPromptConfig()
 	if err != nil {
-		fmt.Println("Failed")
 		return "", err
 	}
-	fmt.Println("Done")
+	log.Println("Done")
 
 	// Use the model from parameter or fall back to config
 	selectedModel := model
@@ -160,13 +159,12 @@ func (c *Client) GenerateStandupReport(
 		Stream:      false,
 	}
 
-	fmt.Printf("  Calling GitHub Models API (%s)... ", selectedModel)
+	log.Printf("  Calling GitHub Models API (%s)... ", selectedModel)
 	response, err := c.callGitHubModels(request)
 	if err != nil {
-		fmt.Println("Failed")
 		return "", err
 	}
-	fmt.Println("Done")
+	log.Println("Done")
 
 	if len(response.Choices) == 0 {
 		return "", fmt.Errorf("no response generated from the model")

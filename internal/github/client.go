@@ -2,6 +2,7 @@ package github
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -14,13 +15,12 @@ type Client struct {
 }
 
 func NewClient() (*Client, error) {
-	fmt.Print("  Connecting to GitHub API... ")
+	log.Print("  Connecting to GitHub API... ")
 	client, err := api.DefaultRESTClient()
 	if err != nil {
-		fmt.Println("Failed")
 		return nil, err
 	}
-	fmt.Println("Done")
+	log.Println("Done")
 
 	return &Client{client: client}, nil
 }
@@ -43,43 +43,40 @@ func (c *Client) CollectActivity(username, repo string, startDate, endDate time.
 	var activities []types.GitHubActivity
 
 	// Collect commits (may be slow or fail)
-	fmt.Print("  🔍 Searching for commits... ")
+	log.Print("  🔍 Searching for commits... ")
 	commits, err := c.getCommits(username, repo, startDate, endDate)
 	if err != nil {
-		fmt.Printf("⚠️  Skipped (search may be restricted)\n")
+		log.Printf("⚠️  Skipped (search may be restricted)\n")
 	} else {
-		fmt.Printf("✅ Found %d commits\n", len(commits))
+		log.Printf("✅ Found %d commits\n", len(commits))
 		activities = append(activities, commits...)
 	}
 
 	// Collect pull requests
-	fmt.Print("  🔍 Searching for pull requests... ")
+	log.Print("  🔍 Searching for pull requests... ")
 	prs, err := c.getPullRequests(username, repo, startDate, endDate)
 	if err != nil {
-		fmt.Println("❌")
 		return nil, fmt.Errorf("failed to get pull requests: %w", err)
 	}
-	fmt.Printf("✅ Found %d pull requests\n", len(prs))
+	log.Printf("✅ Found %d pull requests\n", len(prs))
 	activities = append(activities, prs...)
 
 	// Collect issues
-	fmt.Print("  🔍 Searching for issues... ")
+	log.Print("  🔍 Searching for issues... ")
 	issues, err := c.getIssues(username, repo, startDate, endDate)
 	if err != nil {
-		fmt.Println("❌")
 		return nil, fmt.Errorf("failed to get issues: %w", err)
 	}
-	fmt.Printf("✅ Found %d issues\n", len(issues))
+	log.Printf("✅ Found %d issues\n", len(issues))
 	activities = append(activities, issues...)
 
 	// Collect reviews
-	fmt.Print("  🔍 Searching for code reviews... ")
+	log.Print("  🔍 Searching for code reviews... ")
 	reviews, err := c.getReviews(username, startDate, endDate)
 	if err != nil {
-		fmt.Println("❌")
 		return nil, fmt.Errorf("failed to get reviews: %w", err)
 	}
-	fmt.Printf("✅ Found %d reviews\n", len(reviews))
+	log.Printf("✅ Found %d reviews\n", len(reviews))
 	activities = append(activities, reviews...)
 
 	return activities, nil
