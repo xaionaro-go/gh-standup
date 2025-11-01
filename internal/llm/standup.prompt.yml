@@ -37,7 +37,7 @@ messages:
       headers.
   - role: user
     content: |
-      Based on the following GitHub activity, generate a standup report:
+      Based on the following GitHub activity, generate a standup report (don't write it is a standup report, just write the report):
 
       {{activities}}
 testData:
