@@ -65,9 +65,9 @@ type Client struct {
 // to use when the prompt configuration leaves temperature at 0.
 var modelTemperatureMap = map[string]float64{
 	"openai/gpt-5-mini": 1.0,
-	"openai/gpt-5": 1.0,
+	"openai/gpt-5":      1.0,
 	// Add other models here as needed
-	
+
 }
 
 // getMappedTemperature returns a mapped temperature for the model (if any).
@@ -104,7 +104,11 @@ func loadPromptConfig() (*PromptConfig, error) {
 	return &config, nil
 }
 
-func (c *Client) GenerateStandupReport(activities []types.GitHubActivity, model string) (string, error) {
+func (c *Client) GenerateStandupReport(
+	activities []types.GitHubActivity,
+	model string,
+	promptMessages []PromptMessage,
+) (string, error) {
 	fmt.Print("  Formatting activity data for AI... ")
 	activitySummary := c.formatActivitiesForLLM(activities)
 	fmt.Println("Done")
@@ -123,9 +127,13 @@ func (c *Client) GenerateStandupReport(activities []types.GitHubActivity, model 
 		selectedModel = promptConfig.Model
 	}
 
+	if promptMessages == nil {
+		promptMessages = promptConfig.Messages
+	}
+
 	// Build messages from the prompt config, replacing template variables
-	messages := make([]Message, len(promptConfig.Messages))
-	for i, msg := range promptConfig.Messages {
+	messages := make([]Message, len(promptMessages))
+	for i, msg := range promptMessages {
 		content := msg.Content
 		// Replace the {{activities}} template variable
 		content = strings.ReplaceAll(content, "{{activities}}", activitySummary)

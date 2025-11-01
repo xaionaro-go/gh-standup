@@ -22,15 +22,17 @@ var rootCmd = &cobra.Command{
 }
 
 var (
-	flagDays  int
-	flagModel string
-	flagRepo  string
-	flagUser  string
+	flagDays    int
+	flagModel   string
+	flagPrompts []string
+	flagRepo    string
+	flagUser    string
 )
 
 func init() {
 	rootCmd.Flags().IntVarP(&flagDays, "days", "d", 1, "Number of days to look back for activity")
 	rootCmd.Flags().StringVarP(&flagModel, "model", "m", "openai/gpt-4o", "GitHub Models model to use")
+	rootCmd.Flags().StringArrayVarP(&flagPrompts, "prompts", "p", nil, "Override default prompt messages (can be specified multiple times) in format role:message")
 	rootCmd.Flags().StringVarP(&flagRepo, "repo", "r", "", "Repository to generate standup for (owner/repo)")
 	rootCmd.Flags().StringVarP(&flagUser, "user", "u", "", "User to generate standup for (defaults to authenticated user)")
 }
@@ -86,9 +88,23 @@ func runStandup(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create LLM client: %w", err)
 	}
 
+	var promptMessages []llm.PromptMessage
+	if len(flagPrompts) > 0 {
+		for _, promptStr := range flagPrompts {
+			parts := strings.SplitN(promptStr, ":", 2)
+			if len(parts) != 2 {
+				return fmt.Errorf("invalid prompt format (expected 'rule:message'): %s", promptStr)
+			}
+			promptMessages = append(promptMessages, llm.PromptMessage{
+				Role:    parts[0],
+				Content: parts[1],
+			})
+		}
+	}
+
 	// Generate standup report using GitHub Models
 	fmt.Printf("Generating standup report using %s...\n", flagModel)
-	report, err := llmClient.GenerateStandupReport(activities, flagModel)
+	report, err := llmClient.GenerateStandupReport(activities, flagModel, promptMessages)
 	if err != nil {
 		return fmt.Errorf("failed to generate standup report: %w", err)
 	}
