@@ -32,12 +32,16 @@ messages:
 
       - Avoid bullshit or filler content
 
+      - Avoid unnecessary meta explanations. For example, do not explain that it is a report, just write a report. Or do not write when the achievements were made, just write them as achievements. But do write which project they were made in, since this is cannot be inferred otherwise.
+
+      - Avoid duplications. If something applied to multiple points, then add a header for these headers that contains the common information, and then list the points below it.
+
 
       Format the output as a clean, readable report without any markdown
       headers.
   - role: user
     content: |
-      Based on the following GitHub activity, generate a standup report (don't write it is a standup report, just write the report):
+      Based on the following GitHub activity, generate a standup report (do not mention that it is a report, just write the report):
 
       {{activities}}
 testData:
